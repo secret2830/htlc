@@ -158,7 +158,7 @@ func (k Keeper) IterateHTLCs(
 		hashLock := tmbytes.HexBytes(iterator.Key()[1:])
 
 		var htlc types.HTLC
-		k.GetCdc().MustUnmarshalBinaryBare(iterator.Value(), &htlc)
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &htlc)
 
 		if stop := op(hashLock, htlc); stop {
 			break
