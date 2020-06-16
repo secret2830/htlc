@@ -12,6 +12,7 @@ const (
 	StoreKey                         = types.StoreKey
 	QuerierRoute                     = types.QuerierRoute
 	RouterKey                        = types.RouterKey
+	HTLCAccName                      = types.HTLCAccName
 	QueryHTLC                        = types.QueryHTLC
 	EventTypeCreateHTLC              = types.EventTypeCreateHTLC
 	EventTypeClaimHTLC               = types.EventTypeClaimHTLC
