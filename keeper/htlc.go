@@ -3,7 +3,6 @@ package keeper
 import (
 	"bytes"
 
-	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,7 +60,7 @@ func (k Keeper) ClaimHTLC(ctx sdk.Context, hashLock tmbytes.HexBytes, secret tmb
 	}
 
 	// check if the secret matches with the hash lock
-	if !bytes.Equal(GetHashLock(secret, htlc.Timestamp), hashLock) {
+	if !bytes.Equal(types.GetHashLock(secret, htlc.Timestamp), hashLock) {
 		return sdkerrors.Wrap(types.ErrInvalidSecret, secret.String())
 	}
 
@@ -146,15 +145,6 @@ func (k Keeper) AddHTLCToExpiredQueue(ctx sdk.Context, expirationHeight uint64, 
 func (k Keeper) DeleteHTLCFromExpiredQueue(ctx sdk.Context, expirationHeight uint64, hashLock tmbytes.HexBytes) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetHTLCExpiredQueueKey(expirationHeight, hashLock))
-}
-
-// GetHashLock calculates the hash lock from the given secret and timestamp
-func GetHashLock(secret tmbytes.HexBytes, timestamp uint64) []byte {
-	if timestamp > 0 {
-		return tmhash.Sum(append(secret, sdk.Uint64ToBigEndian(timestamp)...))
-	}
-
-	return tmhash.Sum(secret)
 }
 
 // IterateHTLCs iterates through the HTLCs

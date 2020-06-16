@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,4 +34,13 @@ func NewHTLC(
 func (h HTLC) Validate() error {
 	// TODO
 	return nil
+}
+
+// GetHashLock calculates the hash lock from the given secret and timestamp
+func GetHashLock(secret tmbytes.HexBytes, timestamp uint64) []byte {
+	if timestamp > 0 {
+		return tmhash.Sum(append(secret, sdk.Uint64ToBigEndian(timestamp)...))
+	}
+
+	return tmhash.Sum(secret)
 }
