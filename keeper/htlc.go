@@ -13,17 +13,30 @@ import (
 )
 
 // CreateHTLC creates an HTLC
-func (k Keeper) CreateHTLC(ctx sdk.Context, htlc types.HTLC, hashLock tmbytes.HexBytes) error {
+func (k Keeper) CreateHTLC(
+	ctx sdk.Context,
+	sender,
+	to sdk.AccAddress,
+	receiverOnOtherChain string,
+	amount sdk.Coins,
+	hashLock tmbytes.HexBytes,
+	timestamp,
+	timeLock uint64,
+) error {
 	// check if the HTLC already exists
 	if k.HasHTLC(ctx, hashLock) {
 		return sdkerrors.Wrap(types.ErrHTLCExists, hashLock.String())
 	}
 
 	// transfer the specified tokens to the HTLC module account
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, htlc.Sender, types.HTLCAccName, htlc.Amount)
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.HTLCAccName, amount)
 	if err != nil {
 		return err
 	}
+
+	expirationHeight := uint64(ctx.BlockHeight()) + timeLock
+	state := types.Open
+	htlc := types.NewHTLC(sender, to, receiverOnOtherChain, amount, nil, timestamp, expirationHeight, state)
 
 	// set the HTLC
 	k.SetHTLC(ctx, htlc, hashLock)

@@ -3,8 +3,6 @@ package htlc
 import (
 	"fmt"
 
-	tmbytes "github.com/tendermint/tendermint/libs/bytes"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -32,22 +30,16 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // handleMsgCreateHTLC handles MsgCreateHTLC
 func handleMsgCreateHTLC(ctx sdk.Context, k Keeper, msg MsgCreateHTLC) (*sdk.Result, error) {
-	secret := make(tmbytes.HexBytes, 0)
-	expirationHeight := msg.TimeLock + uint64(ctx.BlockHeight())
-	state := Open
-
-	htlc := NewHTLC(
+	err := k.CreateHTLC(
+		ctx,
 		msg.Sender,
 		msg.To,
 		msg.ReceiverOnOtherChain,
 		msg.Amount,
-		secret,
+		msg.HashLock,
 		msg.Timestamp,
-		expirationHeight,
-		state,
+		msg.TimeLock,
 	)
-
-	err := k.CreateHTLC(ctx, htlc, msg.HashLock)
 	if err != nil {
 		return nil, err
 	}
