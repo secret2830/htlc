@@ -28,11 +28,13 @@ var (
 )
 
 // GetHTLCKey returns the key for the HTLC with the specified hash lock
+// VALUE: htlc/HTLC
 func GetHTLCKey(hashLock []byte) []byte {
 	return append(HTLCKey, hashLock...)
 }
 
 // GetHTLCExpiredQueueKey returns the key for the HTLC expiration queue by the specified height and hash lock
+// VALUE: []byte{}
 func GetHTLCExpiredQueueKey(expirationHeight uint64, hashLock []byte) []byte {
 	return append(append(HTLCExpiredQueueKey, sdk.Uint64ToBigEndian(expirationHeight)...), hashLock...)
 }

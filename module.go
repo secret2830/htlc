@@ -18,6 +18,7 @@ import (
 
 	"github.com/irismod/htlc/client/cli"
 	"github.com/irismod/htlc/client/rest"
+	"github.com/irismod/htlc/simulation"
 	"github.com/irismod/htlc/types"
 )
 
@@ -28,7 +29,9 @@ var (
 )
 
 // AppModuleBasic defines the basic application module used by the HTLC module.
-type AppModuleBasic struct{}
+type AppModuleBasic struct {
+	cdc codec.Marshaler
+}
 
 // Name returns the HTLC module's name.
 func (AppModuleBasic) Name() string {
@@ -168,7 +171,8 @@ func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
 }
 
 // RegisterStoreDecoder registers a decoder for HTLC module's types
-func (AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[StoreKey] = simulation.NewDecodeStore(am.cdc)
 }
 
 // WeightedOperations returns the all the HTLC module operations with their respective weights.
