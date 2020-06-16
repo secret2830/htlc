@@ -16,6 +16,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
+	"github.com/irismod/htlc/client/cli"
+	"github.com/irismod/htlc/client/rest"
 	"github.com/irismod/htlc/types"
 )
 
@@ -56,17 +58,17 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, bz json.RawMessag
 
 // RegisterRESTRoutes registers the REST routes for the HTLC module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-
+	rest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the HTLC module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return nil
+	return cli.GetTxCmd(StoreKey, cdc)
 }
 
 // GetQueryCmd returns the root query command for the HTLC module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return nil
+	return cli.GetQueryCmd(StoreKey, cdc)
 }
 
 //____________________________________________________________________________
