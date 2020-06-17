@@ -62,7 +62,7 @@ func (msg MsgCreateHTLC) ValidateBasic() error {
 	}
 
 	if len(msg.To) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "the receiver address missing")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "recipient missing")
 	}
 
 	if len(msg.ReceiverOnOtherChain) > MaxLengthForAddressOnOtherChain {

@@ -31,8 +31,17 @@ func DefaultGenesisState() GenesisState {
 // expected invariants holds.
 func ValidateGenesis(data GenesisState) error {
 	for hashLockStr, htlc := range data.PendingHTLCs {
-		if _, err := hex.DecodeString(hashLockStr); err != nil {
-			return sdkerrors.Wrap(ErrInvalidHashLock, hashLockStr)
+		hashLock, err := hex.DecodeString(hashLockStr)
+		if err != nil {
+			return err
+		}
+
+		if len(hashLock) != HashLockLength {
+			return sdkerrors.Wrapf(ErrInvalidHashLock, "length of the hash lock must be %d in bytes", HashLockLength)
+		}
+
+		if htlc.State != Open {
+			return sdkerrors.Wrap(ErrHTLCNotOpen, hashLockStr)
 		}
 
 		if err := htlc.Validate(); err != nil {

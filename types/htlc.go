@@ -5,6 +5,7 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // NewHTLC constructs a new HTLC instance
@@ -32,7 +33,30 @@ func NewHTLC(
 
 // Validate validates the HTLC
 func (h HTLC) Validate() error {
-	// TODO
+	if h.Sender.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "sender missing")
+	}
+
+	if len(h.To) == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "recipient missing")
+	}
+
+	if len(h.ReceiverOnOtherChain) > MaxLengthForAddressOnOtherChain {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "length of the receiver on other chain must be between [0,%d]", MaxLengthForAddressOnOtherChain)
+	}
+
+	if !h.Amount.IsValid() || !h.Amount.IsAllPositive() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "the transferred amount must be valid")
+	}
+
+	if h.State != Completed && len(h.Secret) > 0 {
+		return sdkerrors.Wrapf(ErrInvalidSecret, "secret must be empty when the HTLC has not be claimed")
+	}
+
+	if len(h.Secret) > 0 && len(h.Secret) != SecretLength {
+		return sdkerrors.Wrapf(ErrInvalidSecret, "length of the secret must be %d in bytes", SecretLength)
+	}
+
 	return nil
 }
 
