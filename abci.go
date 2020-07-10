@@ -6,10 +6,13 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/irismod/htlc/keeper"
+	"github.com/irismod/htlc/types"
 )
 
 // BeginBlocker handles block beginning logic for HTLC
-func BeginBlocker(ctx sdk.Context, k Keeper) {
+func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 	ctx = ctx.WithLogger(ctx.Logger().With("handler", "beginBlock").With("module", "irismod/htlc"))
 
 	currentBlockHeight := uint64(ctx.BlockHeight())
@@ -17,9 +20,9 @@ func BeginBlocker(ctx sdk.Context, k Keeper) {
 	k.IterateHTLCExpiredQueueByHeight(
 		ctx,
 		currentBlockHeight,
-		func(hlock tmbytes.HexBytes, h HTLC) (stop bool) {
+		func(hlock tmbytes.HexBytes, h types.HTLC) (stop bool) {
 			// update the state
-			h.State = Expired
+			h.State = types.Expired
 			k.SetHTLC(ctx, h, hlock)
 
 			// delete from the expiration queue
@@ -27,8 +30,8 @@ func BeginBlocker(ctx sdk.Context, k Keeper) {
 
 			ctx.EventManager().EmitEvents(sdk.Events{
 				sdk.NewEvent(
-					EventTypeHTLCExpired,
-					sdk.NewAttribute(AttributeKeyHashLock, hlock.String()),
+					types.EventTypeHTLCExpired,
+					sdk.NewAttribute(types.AttributeKeyHashLock, hlock.String()),
 				),
 			})
 

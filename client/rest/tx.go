@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cosmos/cosmos-sdk/client/tx"
+
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/auth/client"
 
 	"github.com/irismod/htlc/types"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	// create an HTLC
 	r.HandleFunc("/htlc/htlcs", createHTLCHandlerFn(cliCtx)).Methods("POST")
 	// claim an HTLC
@@ -49,7 +50,7 @@ type RefundHTLCReq struct {
 	Sender  sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
-func createHTLCHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func createHTLCHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreateHTLCReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -76,11 +77,11 @@ func createHTLCHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		client.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, &msg)
 	}
 }
 
-func claimHTLCHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func claimHTLCHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -112,11 +113,11 @@ func claimHTLCHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		client.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, &msg)
 	}
 }
 
-func refundHTLCHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func refundHTLCHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -142,6 +143,6 @@ func refundHTLCHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		client.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, &msg)
 	}
 }
