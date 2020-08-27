@@ -18,7 +18,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		panic(err.Error())
 	}
 
-	for hashLockStr, htlc := range data.PendingHTLCs {
+	for hashLockStr, htlc := range data.PendingHtlcs {
 		hashLock, _ := hex.DecodeString(hashLockStr)
 
 		k.SetHTLC(ctx, htlc, hashLock)
@@ -27,13 +27,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 }
 
 // ExportGenesis outputs the genesis state
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
-	pendingHTLCs := make(map[string]types.HTLC)
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+	pendingHtlcs := make(map[string]types.HTLC)
 
 	k.IterateHTLCs(ctx, func(hlock tmbytes.HexBytes, h types.HTLC) (stop bool) {
 		if h.State == types.Open {
 			h.ExpirationHeight = h.ExpirationHeight - uint64(ctx.BlockHeight()) + 1
-			pendingHTLCs[hlock.String()] = h
+			pendingHtlcs[hlock.String()] = h
 		} else if h.State == types.Expired {
 			err := k.RefundHTLC(ctx, hlock)
 			if err != nil {
@@ -44,7 +44,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 		return false
 	})
 
-	return types.GenesisState{
-		PendingHTLCs: pendingHTLCs,
+	return &types.GenesisState{
+		PendingHtlcs: pendingHtlcs,
 	}
 }

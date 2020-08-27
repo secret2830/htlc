@@ -20,7 +20,7 @@ import (
 )
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(ctx client.Context) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	htlcTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "HTLC transaction subcommands",
@@ -29,17 +29,17 @@ func GetTxCmd(ctx client.Context) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	htlcTxCmd.AddCommand(flags.PostCommands(
-		GetCmdCreateHTLC(ctx),
-		GetCmdClaimHTLC(ctx),
-		GetCmdRefundHTLC(ctx),
-	)...)
+	htlcTxCmd.AddCommand(
+		GetCmdCreateHTLC(),
+		GetCmdClaimHTLC(),
+		GetCmdRefundHTLC(),
+	)
 
 	return htlcTxCmd
 }
 
 // GetCmdCreateHTLC implements creating an HTLC command
-func GetCmdCreateHTLC(clientCtx client.Context) *cobra.Command {
+func GetCmdCreateHTLC() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create an HTLC",
@@ -55,9 +55,13 @@ $ %s tx htlc create --to=<recipient> --receiver-on-other-chain=<receiver-on-othe
 		),
 		PreRunE: preCheckCmd,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			sender := cliCtx.GetFromAddress()
+			sender := clientCtx.GetFromAddress()
 
 			to, err := sdk.AccAddressFromBech32(viper.GetString(FlagTo))
 			if err != nil {
@@ -110,7 +114,7 @@ $ %s tx htlc create --to=<recipient> --receiver-on-other-chain=<receiver-on-othe
 				return err
 			}
 
-			if err = tx.GenerateOrBroadcastTx(clientCtx, &msg); err == nil && !flags.Changed(FlagHashLock) {
+			if err = tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg); err == nil && !flags.Changed(FlagHashLock) {
 				fmt.Println("**Important** save this secret, hashLock in a safe place.")
 				fmt.Println("It is the only way to claim or refund the locked coins from an HTLC")
 				fmt.Println()
@@ -127,12 +131,13 @@ $ %s tx htlc create --to=<recipient> --receiver-on-other-chain=<receiver-on-othe
 	_ = cmd.MarkFlagRequired(FlagTo)
 	_ = cmd.MarkFlagRequired(FlagAmount)
 	_ = cmd.MarkFlagRequired(FlagTimeLock)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdClaimHTLC implements claiming an HTLC command
-func GetCmdClaimHTLC(clientCtx client.Context) *cobra.Command {
+func GetCmdClaimHTLC() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "claim [hash-lock] [secret]",
 		Short: "Claim an HTLC",
@@ -147,9 +152,13 @@ $ %s tx htlc claim <hash-lock> <secret> --from mykey
 		),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			sender := cliCtx.GetFromAddress()
+			sender := clientCtx.GetFromAddress()
 
 			hashLock, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -166,15 +175,16 @@ $ %s tx htlc claim <hash-lock> <secret> --from mykey
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTx(cliCtx, &msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdRefundHTLC implements refunding an HTLC command
-func GetCmdRefundHTLC(clientCtx client.Context) *cobra.Command {
+func GetCmdRefundHTLC() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "refund [hash-lock]",
 		Short: "Refund an HTLC",
@@ -189,9 +199,13 @@ $ %s tx htlc refund <hash-lock> --from mykey
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			sender := cliCtx.GetFromAddress()
+			sender := clientCtx.GetFromAddress()
 
 			hashLock, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -203,9 +217,10 @@ $ %s tx htlc refund <hash-lock> --from mykey
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTx(cliCtx, &msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
